@@ -1,0 +1,14 @@
+{
+  "name": "krasny-server",
+  "version": "0.0.1",
+  "description": "faster restAPI builder",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ciroreed",
+  "license": "MIT",
+  "dependencies": {
+    "sqlite3_mapper": "^1.0.1"
+  }
+}
