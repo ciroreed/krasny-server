@@ -1,6 +1,6 @@
 {
   "name": "krasny-server",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "faster restAPI builder",
   "main": "index.js",
   "author": "ciroreed",
