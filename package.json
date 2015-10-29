@@ -1,11 +1,8 @@
 {
   "name": "krasny-server",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "faster restAPI builder",
   "main": "index.js",
-  "scripts": {
-    "postpublish": "git push origin master"
-  },
   "author": "ciroreed",
   "license": "MIT",
   "dependencies": {
