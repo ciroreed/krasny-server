@@ -13,7 +13,7 @@ exports.build = function(configuration) {
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(express.static(path.join(dirname, configuration.publicdir)));
     app.get('/', function(req, res){
-        res.sendFile(dirname + '/public/index.html');
+        res.sendFile(dirname + configuration.mainFile);
     });
     app.use(function(req, res, next) {
       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -21,25 +21,25 @@ exports.build = function(configuration) {
       next();
     });
     app.get('/:modelname', function(req, res){
-      if(entities.indexOf(req.params.modelname) === -1) res.json({code: 1});
+      if(entities.indexOf(req.params.modelname) === -1) res.status(404).end();
       mapper.read({entity: req.params.modelname, type: 'collection'}, function(arr){
         res.json(arr);
       });
     });
     app.post('/:modelname', function(req, res){
-      if(entities.indexOf(req.params.modelname) === -1) res.json({code: 1});
+      if(entities.indexOf(req.params.modelname) === -1) res.status(404).end();
       mapper.create({entity: req.params.modelname, subject: req.body}, function(){
         res.json({code: 0});
       });
     });
     app.put('/:modelname/:id', function(req, res){
-      if(entities.indexOf(req.params.modelname) === -1) res.json({code: 1});
+      if(entities.indexOf(req.params.modelname) === -1) res.status(404).end();
       mapper.update({entity: req.params.modelname, subject: req.body, where: {id: req.params.id}}, function(){
         res.json({code: 0});
       });
     });
     app.delete('/:modelname/:id', function(req, res){
-      if(entities.indexOf(req.params.modelname) === -1) res.json({code: 1});
+      if(entities.indexOf(req.params.modelname) === -1) res.status(404).end();
       mapper.delete({entity: req.params.modelname, where: {id: req.params.id}}, function(){
         res.json({code: 0});
       });
