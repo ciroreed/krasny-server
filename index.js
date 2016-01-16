@@ -1,57 +1,51 @@
-exports.build = function(configuration) {
-  var dirname = __dirname + '/../..';
-  var express = require('express');
-  var bodyParser = require('body-parser');
-  var path = require('path');
-  var app = express();
-  var mapper = require('sqlite3_mapper').dbpath(configuration.dbpath);
-  if(configuration.reset){
-    mapper.droptables(configuration.models);
-  }
-  mapper.createtables(configuration.models, function(entities){
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: true }));
-    app.use(express.static(path.join(dirname, configuration.publicdir)));
-    app.get('/', function(req, res){
-        res.sendFile(dirname + configuration.mainFile);
-    });
-    app.use('/:modelname', function(req, res, next) {
-      if(entities.indexOf(req.params.modelname) === -1){
-        res.status(404);
-        res.end();
-      } else {
-        next();
-      }
-    });
-    app.use('/:modelname/*', function(req, res, next) {
-      if(entities.indexOf(req.params.modelname) === -1){
-        res.status(404);
-        res.end();
-      } else {
-        next();
-      }
-    });
-    app.get('/:modelname', function(req, res){
-      mapper.read({entity: req.params.modelname, type: 'collection'}, function(arr){
-        res.json(arr);
-      });
-    });
-    app.post('/:modelname', function(req, res){
-      mapper.create({entity: req.params.modelname, subject: req.body}, function(){
-        res.json({code: 0});
-      });
-    });
-    app.put('/:modelname/:id', function(req, res){
-      mapper.update({entity: req.params.modelname, subject: req.body, where: {id: req.params.id}}, function(){
-        res.json({code: 0});
-      });
-    });
-    app.delete('/:modelname/:id', function(req, res){
-      mapper.delete({entity: req.params.modelname, where: {id: req.params.id}}, function(){
-        res.json({code: 0});
-      });
-    });
-  });
-  app.listen(configuration.port);
-  console.log('krasny listening at ~:' + configuration.port);
-}
+var KServer = function () {
+  var INSTANCE = this;
+  var APP_ROOT = __dirname + "/../..";
+  var SLASH = '/';
+  var express = require("express");
+  var bodyParser = require("body-parser");
+  var path = require("path");
+  INSTANCE.shortid = require("shortid");
+  INSTANCE.mapper = require("sqlite3-orm");
+  INSTANCE.logger = require("log4node");
+  var crudHandlers = require("./handlers.js");
+  var install = function (models) {
+    crudHandlers.config(APP_ROOT, INSTANCE, models);
+    if (INSTANCE.config.file) {
+      INSTANCE.app.get(SLASH, crudHandlers.sendAppFile);
+    }
+    if (INSTANCE.config.db.auth) {
+      INSTANCE.app.post(INSTANCE.api_root + "login/:" + INSTANCE.config.db.auth,
+        crudHandlers.authenticate);
+    }
+    INSTANCE.app.use(INSTANCE.api_root + ":model", crudHandlers.handleModel);
+    INSTANCE.app.use(INSTANCE.api_root + ":model/:id", crudHandlers.handleModel);
+    INSTANCE.app.get(INSTANCE.api_root + ":model", crudHandlers.readModel);
+    INSTANCE.app.get(INSTANCE.api_root + ":model/:id", crudHandlers.readModel);
+    INSTANCE.app.post(INSTANCE.api_root + ":model", crudHandlers.createModel);
+    INSTANCE.app.put(INSTANCE.api_root + ":model/:id", crudHandlers.updateModel);
+    INSTANCE.app.delete(INSTANCE.api_root + ":model/:id", crudHandlers.deleteModel);
+    INSTANCE.app.listen(INSTANCE.config.port);
+    console.log("Krasny server listening at ~:" + INSTANCE.config.port);
+  };
+  INSTANCE.build = function (config) {
+    INSTANCE.config = config;
+    INSTANCE.app = express();
+    INSTANCE.api_root = INSTANCE.config.api ? SLASH + INSTANCE.config.api +
+      SLASH : SLASH;
+    INSTANCE.mapper.connect(INSTANCE.config.db.path, INSTANCE.config.verbosedb ||
+      false);
+    INSTANCE.app.use(bodyParser.json());
+    INSTANCE.app.use(bodyParser.urlencoded({
+      extended: true
+    }));
+    INSTANCE.app.use(express.static(path.join(APP_ROOT, INSTANCE.config.public)));
+    if (INSTANCE.config.reset) {
+      INSTANCE.mapper.dropTables(INSTANCE.config.models);
+    }
+    INSTANCE.mapper.createTables(INSTANCE.config.models, install);
+    INSTANCE.logger = new INSTANCE.logger(INSTANCE.config.verbose);
+  };
+  return INSTANCE;
+};
+module.exports = new KServer();

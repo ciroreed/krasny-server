@@ -1,2 +1,5 @@
 node_modules
 npm-debug.log
+krasny-server.iml
+.idea
+functional.test

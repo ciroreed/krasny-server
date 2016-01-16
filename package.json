@@ -5,9 +5,13 @@
   "main": "index.js",
   "author": "ciroreed",
   "license": "MIT",
+  "scripts" : {
+    "test" : "sudo node test"
+  },
   "dependencies": {
     "body-parser": "^1.14.1",
     "express": "^4.13.3",
-    "sqlite3_mapper": "^1.0.1"
+    "shortid": "^2.2.4",
+    "sqlite3-orm": "^1.0.0"
   }
 }
