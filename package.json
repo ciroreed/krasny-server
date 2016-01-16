@@ -1,12 +1,12 @@
 {
   "name": "krasny-server",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "faster restAPI builder",
   "main": "index.js",
   "author": "ciroreed",
   "license": "MIT",
-  "scripts" : {
-    "test" : "sudo node test"
+  "scripts": {
+    "test": "sudo node test"
   },
   "dependencies": {
     "body-parser": "^1.14.1",
