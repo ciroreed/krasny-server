@@ -16,7 +16,8 @@ server.build({
       delete: ["name", "password"]
     },
     hide: ["id", "password"],
-    unique: "email"
+    unique: "email",
+    session: true
   }, {
     uid: "mail",
     defaults: {
@@ -51,10 +52,7 @@ server.build({
     }
   }],
   //    file: "index.html",
-  db: {
-    path: "./database",
-    auth: "user"
-  },
+  db: "./database",
   reset: false,
   public: "public",
   api: "rest",

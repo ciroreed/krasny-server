@@ -14,10 +14,14 @@ var KServer = function () {
     if (INSTANCE.config.file) {
       INSTANCE.app.get(SLASH, crudHandlers.sendAppFile);
     }
-    if (INSTANCE.config.db.auth) {
-      INSTANCE.app.post(INSTANCE.api_root + "login/:" + INSTANCE.config.db.auth,
-        crudHandlers.authenticate);
-    }
+    models.forEach(function (m) {
+      if (m.session) {
+        INSTANCE.config.sessionModel = m.uid;
+        INSTANCE.app.post(INSTANCE.api_root + "session/:" + m.uid,
+          crudHandlers.authenticate);
+        return;
+      }
+    });
     INSTANCE.app.use(INSTANCE.api_root + ":model", crudHandlers.handleModel);
     INSTANCE.app.use(INSTANCE.api_root + ":model/:id", crudHandlers.handleModel);
     INSTANCE.app.get(INSTANCE.api_root + ":model", crudHandlers.readModel);
@@ -28,12 +32,13 @@ var KServer = function () {
     INSTANCE.app.listen(INSTANCE.config.port);
     console.log("Krasny server listening at ~:" + INSTANCE.config.port);
   };
-  INSTANCE.build = function (config) {
-    INSTANCE.config = config;
+  INSTANCE.build = function (prop) {
+    INSTANCE.config = prop.config;
+    INSTANCE.models = prop.models;
     INSTANCE.app = express();
     INSTANCE.api_root = INSTANCE.config.api ? SLASH + INSTANCE.config.api +
       SLASH : SLASH;
-    INSTANCE.mapper.connect(INSTANCE.config.db.path, INSTANCE.config.verbosedb ||
+    INSTANCE.mapper.connect(INSTANCE.config.db, INSTANCE.config.verbosedb ||
       false);
     INSTANCE.app.use(bodyParser.json());
     INSTANCE.app.use(bodyParser.urlencoded({
@@ -41,9 +46,9 @@ var KServer = function () {
     }));
     INSTANCE.app.use(express.static(path.join(APP_ROOT, INSTANCE.config.public)));
     if (INSTANCE.config.reset) {
-      INSTANCE.mapper.dropTables(INSTANCE.config.models);
+      INSTANCE.mapper.dropTables(INSTANCE.models);
     }
-    INSTANCE.mapper.createTables(INSTANCE.config.models, install);
+    INSTANCE.mapper.createTables(INSTANCE.models, install);
     INSTANCE.logger = new INSTANCE.logger(INSTANCE.config.verbose);
   };
   return INSTANCE;

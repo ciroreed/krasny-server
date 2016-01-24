@@ -139,7 +139,7 @@ var CrudHandler = function () {
   };
   INSTANCE.authenticate = function (req, res) {
     INSTANCE.serverInstance.mapper.read({
-      entity: req.params[INSTANCE.serverInstance.config.db.auth],
+      entity: req.params[INSTANCE.serverInstance.config.sessionModel],
       where: req.body,
       type: "single"
     }, function (err, authModel) {
@@ -152,6 +152,7 @@ var CrudHandler = function () {
           token: UID
         });
       } else {
+        INSTANCE.serverInstance.logger.print("model doesn't exist in database", req.body);
         handleConnection(res, 401);
       }
     });
