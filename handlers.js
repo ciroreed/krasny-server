@@ -25,8 +25,8 @@ var CrudHandler = function () {
   };
   INSTANCE.handleModel = function (req, res, next) {
     var code = 404;
-    INSTANCE.models.forEach(function (m) {
-      if (m.uid === req.params.model) {
+    INSTANCE.serverInstance.forIn(INSTANCE.models, function (m, uid) {
+      if (uid === req.params.model) {
         code = 200;
         if (m.token && INSTANCE.auths.indexOf(req.query.token) === -1) {
           code = 401;

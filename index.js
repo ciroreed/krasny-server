@@ -1,4 +1,11 @@
 var KServer = function () {
+
+  INSTANCE.forIn = function (coll, fn) {
+    Object.keys(coll).forEach(function (o) {
+      fn(coll[o], o);
+    });
+  };
+
   var INSTANCE = this;
   var APP_ROOT = __dirname + "/../..";
   var SLASH = '/';
@@ -13,10 +20,10 @@ var KServer = function () {
     if (INSTANCE.config.file) {
       INSTANCE.app.get(SLASH, crudHandlers.sendAppFile);
     }
-    models.forEach(function (m) {
+    INSTANCE.forIn(models, function (m, uid) {
       if (m.session) {
-        INSTANCE.config.sessionModel = m.uid;
-        INSTANCE.app.post(INSTANCE.api_root + "session/:" + m.uid,
+        INSTANCE.config.sessionModel = uid;
+        INSTANCE.app.post(INSTANCE.api_root + "session/:" + uid,
           crudHandlers.authenticate);
         return;
       }

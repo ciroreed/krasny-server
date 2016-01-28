@@ -8,6 +8,10 @@
   "scripts": {
     "postpublish": "git push origin master"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ciroreed/krasny-server.git"
+  },
   "dependencies": {
     "body-parser": "^1.14.1",
     "express": "^4.13.3",
