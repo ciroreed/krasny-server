@@ -7,7 +7,6 @@ var KServer = function () {
   var path = require("path");
   INSTANCE.shortid = require("shortid");
   INSTANCE.mapper = require("sqlite3-orm");
-  INSTANCE.logger = require("log4node");
   var crudHandlers = require("./handlers.js");
   var install = function (models) {
     crudHandlers.config(APP_ROOT, INSTANCE, models);
@@ -49,7 +48,6 @@ var KServer = function () {
       INSTANCE.mapper.dropTables(INSTANCE.models);
     }
     INSTANCE.mapper.createTables(INSTANCE.models, install);
-    INSTANCE.logger = new INSTANCE.logger(INSTANCE.config.verbose);
   };
   return INSTANCE;
 };

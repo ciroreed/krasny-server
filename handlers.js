@@ -46,8 +46,6 @@ var CrudHandler = function () {
           res.locals.hideprops = m.hide;
         }
         if (m.unique) {
-          INSTANCE.serverInstance.logger.print(
-            "uniqueprop set in response object");
           res.locals.uniqueprop = m.unique;
         }
       }
@@ -91,8 +89,6 @@ var CrudHandler = function () {
     for (var prop in res.locals.authkey) {
       req.body[prop] = res.locals.authkey[prop];
     }
-    INSTANCE.serverInstance.logger.print("Check if uniqueprop exist", res.locals
-      .uniqueprop, req.params.model, req.body);
     if (res.locals.uniqueprop) {
       var uniqueVal = {};
       uniqueVal[res.locals.uniqueprop] = req.body[res.locals.uniqueprop];
@@ -145,14 +141,11 @@ var CrudHandler = function () {
     }, function (err, authModel) {
       if (authModel) {
         var UID = INSTANCE.serverInstance.shortid.generate();
-        INSTANCE.serverInstance.logger.print("user logged in", authModel);
         INSTANCE.auths[authModel.id] = UID;
-        INSTANCE.serverInstance.logger.print("auths", INSTANCE.auths);
         res.json({
           token: UID
         });
       } else {
-        INSTANCE.serverInstance.logger.print("model doesn't exist in database", req.body);
         handleConnection(res, 401);
       }
     });
