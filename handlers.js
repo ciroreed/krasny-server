@@ -6,6 +6,15 @@ var CrudHandler = function () {
     PUT: "update",
     DELETE: "delete"
   };
+  var filterResult = function (rawResult, predicate, authModel) {
+    var cookedResult = [];
+    for (var i = 0; i < rawResult.length; i++) {
+      if (predicate(rawResult[i], authModel)) {
+        cookedResult.push(rawResult[i]);
+      }
+    }
+    return cookedResult;
+  };
   var handleConnection = function (res, status, next) {
     if (status === 200 && next) {
       next();
@@ -18,29 +27,24 @@ var CrudHandler = function () {
     INSTANCE.appRoot = appRoot;
     INSTANCE.serverInstance = serverInstance;
     INSTANCE.models = models;
-    INSTANCE.auths = [];
+    INSTANCE.auths = {};
   };
   INSTANCE.sendAppFile = function (req, res) {
-    res.sendFile(INSTANCE.appRoot + INSTANCE.serverInstance.config.file);
+    res.sendFile(INSTANCE.serverInstance.path.resolve(INSTANCE.serverInstance
+      .config.rootdir + "/" + INSTANCE.serverInstance.config.file));
   };
   INSTANCE.handleModel = function (req, res, next) {
     var code = 404;
     INSTANCE.serverInstance.forIn(INSTANCE.models, function (m, uid) {
       if (uid === req.params.model) {
         code = 200;
-        if (m.token && INSTANCE.auths.indexOf(req.query.token) === -1) {
-          code = 401;
-        }
-        if (m.required && !m.required[METHODS[req.method]].every(
-            function (e) {
-              return req.body.hasOwnProperty(e);
-            })) {
-          code = 400;
-        }
-        if (m.token && m.token[METHODS[req.method]]) {
-          res.locals.authkey = {};
-          res.locals.authkey[m.token[METHODS[req.method]]] = INSTANCE.auths
-            .indexOf(req.query.token);
+        res.locals.contextModel = m;
+        if (m.crud && m.crud[METHODS[req.method]] &&
+          m.crud[METHODS[req.method]].length > 1 &&
+          typeof INSTANCE.auths[req.query.token] === "undefined") {
+          code = 401
+        } else if (m.crud && m.crud[METHODS[req.method]]) {
+          res.locals.authModel = INSTANCE.auths[req.query.token];
         }
         if (m.hide) {
           res.locals.hideprops = m.hide;
@@ -56,26 +60,18 @@ var CrudHandler = function () {
     INSTANCE.serverInstance.mapper.read({
       entity: req.params.model,
       type: req.params.id ? "single" : "collection",
-      where: req.params.id ? req.params.id : res.locals.authkey ||
-        undefined
+      where: req.params.id || undefined
     }, function (err, result) {
       if (err) {
         handleConnection(res, 500);
         return false;
       }
-      if (res.locals.hideprops) {
-        var cookedResult = [];
-        result.forEach(function (r) {
-          for (var prop in r) {
-            if (res.locals.hideprops.indexOf(prop)) {
-              delete r[prop];
-            }
-          }
-          cookedResult.push(r);
-        });
-        res.json(cookedResult);
+      if (res.locals.contextModel.crud && res.locals.contextModel.crud.read) {
+        res.json(filterResult(result, res.locals.contextModel.crud.read,
+          res.locals.authModel));
+      } else {
+        res.json(result);
       }
-      res.json(result);
     });
   };
   INSTANCE.createModel = function (req, res) {
@@ -86,8 +82,13 @@ var CrudHandler = function () {
       }
       handleConnection(res, status);
     };
-    for (var prop in res.locals.authkey) {
-      req.body[prop] = res.locals.authkey[prop];
+    if (res.locals.contextModel.crud && res.locals.contextModel.crud.create) {
+      req.body = res.locals.contextModel.crud.create(req.body,
+        res.locals.authModel);
+    }
+    if (!req.body) {
+      handleConnection(res, 401);
+      return;
     }
     if (res.locals.uniqueprop) {
       var uniqueVal = {};
@@ -105,6 +106,19 @@ var CrudHandler = function () {
     }
   };
   INSTANCE.updateModel = function (req, res) {
+    if (res.locals.contextModel.crud && res.locals.contextModel.crud.update) {
+      req.body = res.locals.contextModel.crud.update(req.body,
+        res.locals.authModel);
+    }
+
+    console.log("before crud predicate");
+    console.log(req.body);
+    if (!req.body) {
+      handleConnection(res, 401);
+      return;
+    }
+    delete req.body.id;
+    console.log(req.body);
     INSTANCE.serverInstance.mapper.update({
       entity: req.params.model,
       subject: req.body,
@@ -120,6 +134,11 @@ var CrudHandler = function () {
     });
   };
   INSTANCE.deleteModel = function (req, res) {
+    if (res.locals.contextModel.crud.delete(req.body,
+      res.locals.authModel)) {
+      handleConnection(res, 401);
+      return;
+    }
     INSTANCE.serverInstance.mapper.remove({
       entity: req.params.model,
       where: {
@@ -141,13 +160,21 @@ var CrudHandler = function () {
     }, function (err, authModel) {
       if (authModel) {
         var UID = INSTANCE.serverInstance.shortid.generate();
-        INSTANCE.auths[authModel.id] = UID;
+        INSTANCE.auths[UID] = authModel;
         res.json({
-          token: UID
+          token: UID,
+          sessionModel: authModel
         });
       } else {
         handleConnection(res, 401);
       }
+    });
+  };
+  INSTANCE.fileUpload = function (req, res) {
+    console.log(req.file);
+    res.json({
+      code: 0,
+      upload: req.file
     });
   };
   return INSTANCE;

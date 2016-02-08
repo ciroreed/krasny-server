@@ -1,62 +1,41 @@
 var server = require("./index.js");
 server.build({
-  models: [{
-    uid: "user",
-    defaults: {
-      id: 0,
-      name: "",
-      password: "",
-      email: "",
-      timestamp: ""
-    },
-    required: {
-      create: ["name", "password", "email"],
-      read: ["name", "password"],
-      update: ["name", "password"],
-      delete: ["name", "password"]
-    },
-    hide: ["id", "password"],
-    unique: "email",
-    session: true
-  }, {
-    uid: "mail",
-    defaults: {
-      id: 0,
-      sender: 0,
-      receiver: 0,
-      message: ""
-    },
-    required: {
-      create: ["receiver", "message"],
-      read: [],
-      update: ["id", "message"],
-      delete: ["id"]
-    },
-    join: {
-      read: {
-        sender: {
-          user: "email"
-        }
+  models: {
+    user: {
+      defaults: {
+        id: 0,
+        name: "",
+        password: "",
+        perm: 1
       },
-      create: {
-        receiver: {
-          user: "email"
+      session: true
+    },
+    incidence: {
+      defaults: {
+        id: 0,
+        owner: 0,
+        title: "",
+        permissionLevel: 2
+      },
+      crud: {
+        read: function (incidence, session) {
+          return session.perm > incidence.permissionLevel || session.id === incidence.owner;
+        },
+        create: function(incidence, session){
+          if(session.perm === 0){
+            incidence.owner = session.id
+            return incidence;
+          }
+          return false;
         }
       }
-    },
-    token: {
-      create: "sender",
-      read: "receiver",
-      update: "receiver",
-      delete: "receiver"
     }
-  }],
-  //    file: "index.html",
-  db: "./database",
-  reset: false,
-  public: "public",
-  api: "rest",
-  verbose: true,
-  verbosedb: true,
-  port: 80
+  },
+  config: {
+    db: "./database",
+    rootdir: "public",
+    api: "rest",
+    verbosedb: true,
+    port: 8080
+  }
 });

@@ -1,17 +1,15 @@
 var KServer = function () {
-
+  var INSTANCE = this;
   INSTANCE.forIn = function (coll, fn) {
     Object.keys(coll).forEach(function (o) {
       fn(coll[o], o);
     });
   };
-
-  var INSTANCE = this;
   var APP_ROOT = __dirname + "/../..";
-  var SLASH = '/';
+  var SLASH = "/";
   var express = require("express");
-  var bodyParser = require("body-parser");
-  var path = require("path");
+  INSTANCE.path = require("path");
+  INSTANCE.multer = require("multer");
   INSTANCE.shortid = require("shortid");
   INSTANCE.mapper = require("sqlite3-orm");
   var crudHandlers = require("./handlers.js");
@@ -24,33 +22,56 @@ var KServer = function () {
       if (m.session) {
         INSTANCE.config.sessionModel = uid;
         INSTANCE.app.post(INSTANCE.api_root + "session/:" + uid,
+          INSTANCE.regular.array(),
           crudHandlers.authenticate);
         return;
       }
     });
     INSTANCE.app.use(INSTANCE.api_root + ":model", crudHandlers.handleModel);
     INSTANCE.app.use(INSTANCE.api_root + ":model/:id", crudHandlers.handleModel);
-    INSTANCE.app.get(INSTANCE.api_root + ":model", crudHandlers.readModel);
-    INSTANCE.app.get(INSTANCE.api_root + ":model/:id", crudHandlers.readModel);
-    INSTANCE.app.post(INSTANCE.api_root + ":model", crudHandlers.createModel);
-    INSTANCE.app.put(INSTANCE.api_root + ":model/:id", crudHandlers.updateModel);
-    INSTANCE.app.delete(INSTANCE.api_root + ":model/:id", crudHandlers.deleteModel);
+
+    INSTANCE.app.get(INSTANCE.api_root + ":model", crudHandlers.readModel);    
+    INSTANCE.app.post(INSTANCE.api_root + ":model", INSTANCE.regular.array(),
+      crudHandlers.createModel);
+    INSTANCE.app.put(INSTANCE.api_root + ":model/:id", INSTANCE.regular.array(),
+      crudHandlers.updateModel);
+    INSTANCE.app.delete(INSTANCE.api_root + ":model/:id", INSTANCE.regular.array(),
+      crudHandlers.deleteModel);
     INSTANCE.app.listen(INSTANCE.config.port);
     console.log("Krasny server listening at ~:" + INSTANCE.config.port);
   };
   INSTANCE.build = function (prop) {
-    INSTANCE.config = prop.config;
     INSTANCE.models = prop.models;
+    INSTANCE.config = prop.config;
+
     INSTANCE.app = express();
     INSTANCE.api_root = INSTANCE.config.api ? SLASH + INSTANCE.config.api +
       SLASH : SLASH;
     INSTANCE.mapper.connect(INSTANCE.config.db, INSTANCE.config.verbosedb ||
       false);
-    INSTANCE.app.use(bodyParser.json());
-    INSTANCE.app.use(bodyParser.urlencoded({
-      extended: true
-    }));
-    INSTANCE.app.use(express.static(path.join(APP_ROOT, INSTANCE.config.public)));
+
+    INSTANCE.regular = INSTANCE.multer();
+
+    if (prop.config.uploaddir && prop.config.fileinput) {
+      var tmp = INSTANCE.multer.diskStorage({
+        destination: function (req, file, callback) {
+          callback(null, INSTANCE.config.uploaddir);
+        },
+        filename: function (req, file, callback) {
+          callback(null, file.fieldname + '-' + Date.now() + "." +
+            file.originalname.split(".").pop());
+        }
+      });
+
+      var upload = INSTANCE.multer({
+        storage: tmp
+      }).single(INSTANCE.config.fileinput);
+      INSTANCE.app.post(INSTANCE.api_root + INSTANCE.config.fileinput,
+        upload, crudHandlers.fileUpload);
+    }
+
+    INSTANCE.app.use(express.static(INSTANCE.path.join(APP_ROOT, INSTANCE.config
+      .rootdir)));
     if (INSTANCE.config.reset) {
       INSTANCE.mapper.dropTables(INSTANCE.models);
     }

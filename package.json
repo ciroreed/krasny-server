@@ -1,6 +1,6 @@
 {
   "name": "krasny-server",
-  "version": "1.1.1",
+  "version": "1.2.1",
   "description": "faster restAPI builder, ready for krasny (client)",
   "main": "index.js",
   "author": "ciroreed",
@@ -13,8 +13,8 @@
     "url": "git+https://github.com/ciroreed/krasny-server.git"
   },
   "dependencies": {
-    "body-parser": "^1.14.1",
     "express": "^4.13.3",
+    "multer": "^1.1.0",
     "shortid": "^2.2.4",
     "sqlite3-orm": "^1.0.0"
   }
