@@ -9,7 +9,8 @@ var CrudHandler = function () {
   var filterResult = function (rawResult, predicate, authModel) {
     var cookedResult = [];
     for (var i = 0; i < rawResult.length; i++) {
-      if (predicate(rawResult[i], authModel)) {
+      var cookInstance = predicate(rawResult[i], authModel);
+      if (cookInstance) {
         cookedResult.push(rawResult[i]);
       }
     }
