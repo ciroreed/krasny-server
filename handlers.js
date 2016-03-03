@@ -169,7 +169,6 @@ var CrudHandler = function () {
     });
   };
   INSTANCE.fileUpload = function (req, res) {
-    console.log(req.file);
     res.json({
       code: 0,
       upload: req.file
