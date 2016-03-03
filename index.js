@@ -5,16 +5,16 @@ var KServer = function () {
       fn(coll[o], o);
     });
   };
-  var APP_ROOT = __dirname + "/../..";
   var SLASH = "/";
   var express = require("express");
+  INSTANCE.APP_ROOT = __dirname + "/../..";
   INSTANCE.path = require("path");
   INSTANCE.multer = require("multer");
   INSTANCE.shortid = require("shortid");
   INSTANCE.mapper = require("sqlite3-orm");
   var crudHandlers = require("./handlers.js");
   var install = function (models) {
-    crudHandlers.config(APP_ROOT, INSTANCE, models);
+    crudHandlers.config(INSTANCE.APP_ROOT, INSTANCE, models);
     if (INSTANCE.config.file) {
       INSTANCE.app.get(SLASH, crudHandlers.sendAppFile);
     }
@@ -30,7 +30,7 @@ var KServer = function () {
     INSTANCE.app.use(INSTANCE.api_root + ":model", crudHandlers.handleModel);
     INSTANCE.app.use(INSTANCE.api_root + ":model/:id", crudHandlers.handleModel);
 
-    INSTANCE.app.get(INSTANCE.api_root + ":model", crudHandlers.readModel);    
+    INSTANCE.app.get(INSTANCE.api_root + ":model", crudHandlers.readModel);
     INSTANCE.app.post(INSTANCE.api_root + ":model", INSTANCE.regular.array(),
       crudHandlers.createModel);
     INSTANCE.app.put(INSTANCE.api_root + ":model/:id", INSTANCE.regular.array(),
@@ -68,9 +68,11 @@ var KServer = function () {
       }).single(INSTANCE.config.fileinput);
       INSTANCE.app.post(INSTANCE.api_root + INSTANCE.config.fileinput,
         upload, crudHandlers.fileUpload);
+      INSTANCE.app.get(INSTANCE.api_root + "download/:filepath",
+        crudHandlers.fileDownload);
     }
 
-    INSTANCE.app.use(express.static(INSTANCE.path.join(APP_ROOT, INSTANCE.config
+    INSTANCE.app.use(express.static(INSTANCE.path.join(INSTANCE.APP_ROOT, INSTANCE.config
       .rootdir)));
     if (INSTANCE.config.reset) {
       INSTANCE.mapper.dropTables(INSTANCE.models);
