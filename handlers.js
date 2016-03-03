@@ -9,8 +9,7 @@ var CrudHandler = function () {
   var filterResult = function (rawResult, predicate, authModel) {
     var cookedResult = [];
     for (var i = 0; i < rawResult.length; i++) {
-      var cookInstance = predicate(rawResult[i], authModel);
-      if (cookInstance) {
+      if (predicate(rawResult[i], authModel)) {
         cookedResult.push(rawResult[i]);
       }
     }
@@ -112,14 +111,12 @@ var CrudHandler = function () {
         res.locals.authModel);
     }
 
-    console.log("before crud predicate");
-    console.log(req.body);
     if (!req.body) {
       handleConnection(res, 401);
       return;
     }
     delete req.body.id;
-    console.log(req.body);
+
     INSTANCE.serverInstance.mapper.update({
       entity: req.params.model,
       subject: req.body,
@@ -177,6 +174,10 @@ var CrudHandler = function () {
       code: 0,
       upload: req.file
     });
+  };
+  INSTANCE.fileDownload = function(req, res){
+    var file = INSTANCE.serverInstance.APP_ROOT + "/" + INSTANCE.serverInstance.config.uploaddir + "/" + req.params.filepath;
+    res.download(file);
   };
   return INSTANCE;
 }
