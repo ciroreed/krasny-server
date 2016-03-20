@@ -1,12 +1,13 @@
 {
   "name": "krasny-server",
   "version": "1.2.4",
-  "description": "faster restAPI builder, ready for krasny (client)",
+  "description": "fast restAPI builder, ready for krasny (client)",
   "main": "index.js",
   "author": "ciroreed",
   "license": "MIT",
   "scripts": {
-    "postpublish": "git push origin master"
+    "postpublish": "git push origin master",
+    "postinstall": "node preinstall.js && echo \"krasny install success!\""
   },
   "repository": {
     "type": "git",
